@@ -88,3 +88,60 @@ h2 {
     transform: rotate(360deg);
   }
 }
+
+.tm-container {
+  max-width: 400px;
+  margin: 20px auto;
+  text-align: center;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  color: #222;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  background-color: #f9f9f9;
+}
+
+.tm-title {
+  margin-bottom: 20px;
+}
+
+.tm-start-button {
+  padding: 12px 30px;
+  font-size: 18px;
+  border-radius: 6px;
+  cursor: pointer;
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  box-shadow: 0 3px 8px rgba(76, 175, 80, 0.5);
+  transition: background-color 0.3s;
+}
+
+.tm-start-button:hover {
+  background-color: #45a045;
+}
+
+.tm-webcam {
+  margin: 20px auto;
+  width: 220px;
+  height: 220px;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  border: 2px solid #ccc;
+  background-color: #000;
+}
+
+.tm-status {
+  margin-top: 20px;
+  font-weight: bold;
+  font-size: 20px;
+}
+
+.tm-status.blue {
+  color: #1976d2;
+}
+
+.tm-status.red {
+  color: #d32f2f;
+}

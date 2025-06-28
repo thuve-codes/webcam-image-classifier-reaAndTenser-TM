@@ -99,70 +99,24 @@ const TMImageModel = () => {
   };
 
   return (
-    <div
-      style={{
-        maxWidth: 400,
-        margin: "20px auto",
-        textAlign: "center",
-        fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
-        color: "#222",
-        padding: 20,
-        borderRadius: 8,
-        boxShadow: "0 4px 15px rgba(0,0,0,0.2)",
-        backgroundColor: "#f9f9f9",
-      }}
-    >
-      <h2 style={{ marginBottom: 20 }}>Teachable Machine Image Model</h2>
+    <div className="tm-container">
+      <h2 className="tm-title">Teachable Machine Image Model</h2>
 
       {!started && (
-        <button
-          onClick={handleStart}
-          style={{
-            padding: "12px 30px",
-            fontSize: 18,
-            borderRadius: 6,
-            cursor: "pointer",
-            backgroundColor: "#4caf50",
-            color: "white",
-            border: "none",
-            boxShadow: "0 3px 8px rgba(76, 175, 80, 0.5)",
-            transition: "background-color 0.3s",
-          }}
-          onMouseEnter={(e) =>
-            (e.currentTarget.style.backgroundColor = "#45a045")
-          }
-          onMouseLeave={(e) =>
-            (e.currentTarget.style.backgroundColor = "#4caf50")
-          }
-        >
+        <button className="tm-start-button" onClick={handleStart}>
           Start Detection
         </button>
       )}
 
       {loading && <p style={{ fontSize: 16 }}>Loading model and webcam...</p>}
 
-      <div
-        ref={webcamRef}
-        style={{
-          margin: "20px auto",
-          width: 220,
-          height: 220,
-          borderRadius: 12,
-          overflow: "hidden",
-          boxShadow: "0 4px 15px rgba(0,0,0,0.1)",
-          border: "2px solid #ccc",
-          backgroundColor: "#000",
-        }}
-      />
+      <div ref={webcamRef} className="tm-webcam" />
 
       {majorityClass && !loading && (
         <h3
-          style={{
-            marginTop: 20,
-            fontWeight: "bold",
-            fontSize: 20,
-            color: majorityClass === "Class 1" ? "#1976d2" : "#d32f2f",
-          }}
+          className={`tm-status ${
+            majorityClass === "Class 1" ? "blue" : "red"
+          }`}
         >
           User is{" "}
           <span>
