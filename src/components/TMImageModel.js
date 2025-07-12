@@ -4,8 +4,7 @@ import * as tmImage from "@teachablemachine/image";
 const TMImageModel = () => {
   const webcamRef = useRef(null);
   const modelRef = useRef(null);
-  const audioCow = useRef(null);
-  const audioElephant = useRef(null);
+  const audio = useRef(null);
   const currentlyPlaying = useRef(null);
 
   const [started, setStarted] = useState(false);
@@ -59,15 +58,15 @@ const TMImageModel = () => {
     setLoading(true);
     try {
       // Load audios
-      audioCow.current = new Audio("/audio/champak.mp3");
-      audioElephant.current = new Audio("/audio/jawan.mp3");
+      audio.current = new Audio("/audio/champak.mp3");
+      audio.current = new Audio("/audio/jawan.mp3");
 
       // Allow user gesture to enable autoplay
-      audioCow.current.load();
-      audioElephant.current.load();
+      audio.current.load();
+      audio.current.load();
 
-      audioCow.current.loop = true;
-      audioElephant.current.loop = true;
+      audio.current.loop = true;
+      audio.current.loop = true;
 
       const model = await tmImage.load(modelURL, metadataURL);
       modelRef.current = model;
@@ -118,23 +117,31 @@ const TMImageModel = () => {
           switch (label) {
             case "cow":
               if (currentlyPlaying.current !== "cow") {
-                stopAudio(audioElephant.current);
-                playAudio(audioCow.current);
+                stopAudio(audio.current);
+                playAudio(audio.current);
                 currentlyPlaying.current = "cow";
+              }
+              break;
+
+            case "eleplant":
+              if (currentlyPlaying.current !== "eleplant") {
+                stopAudio(audio.current);
+                playAudio(audio.current);
+                currentlyPlaying.current = "eleplant";
               }
               break;
 
             case "Class 4":
               if (currentlyPlaying.current !== "eleplant") {
-                stopAudio(audioCow.current);
-                playAudio(audioElephant.current);
+                stopAudio(audio.current);
+                playAudio(audio.current);
                 currentlyPlaying.current = "eleplant";
               }
               break;
 
             default:
-              stopAudio(audioCow.current);
-              stopAudio(audioElephant.current);
+              stopAudio(audio.current);
+              stopAudio(audio.current);
               currentlyPlaying.current = null;
           }
         }
@@ -163,7 +170,7 @@ const TMImageModel = () => {
       case "other":
         return "Detected: Other Object";
       case "Class 4":
-        return "Detected: Class 4";
+        return "Detected: Both";
       default:
         return "Detecting...";
     }
