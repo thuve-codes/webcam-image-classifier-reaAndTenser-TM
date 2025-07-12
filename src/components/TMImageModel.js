@@ -1,20 +1,45 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import * as tmImage from "@teachablemachine/image";
 
 const TMImageModel = () => {
   const webcamRef = useRef(null);
   const modelRef = useRef(null);
-  const audioClass1 = useRef(null);
-  const audioClass2 = useRef(null);
+  const audioCow = useRef(null);
+  const audioElephant = useRef(null);
   const currentlyPlaying = useRef(null);
 
   const [started, setStarted] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [predictions, setPredictions] = useState([]);
   const [majorityClass, setMajorityClass] = useState(null);
 
   const URL = process.env.PUBLIC_URL + "/tm-my-image-model/";
   const modelURL = URL + "model.json";
   const metadataURL = URL + "metadata.json";
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (predictions.length > 0) {
+        sendPredictionsToBackend(predictions);
+      }
+    }, 1000); // Send data every second
+
+    return () => clearInterval(interval);
+  }, [predictions]);
+
+  const sendPredictionsToBackend = async (data) => {
+    try {
+      await fetch("http://localhost:5000/api/predictions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ observations: data }),
+      });
+    } catch (error) {
+      console.error("Error sending predictions to backend:", error);
+    }
+  };
 
   const stopAudio = (audio) => {
     if (audio && !audio.paused) {
@@ -33,11 +58,16 @@ const TMImageModel = () => {
   const init = async () => {
     setLoading(true);
     try {
-      audioClass1.current = new Audio("/audio/champak.mp3");
-      audioClass2.current = new Audio("/audio/jawan.mp3");
+      // Load audios
+      audioCow.current = new Audio("/audio/champak.mp3");
+      audioElephant.current = new Audio("/audio/jawan.mp3");
 
-      audioClass1.current.loop = true;
-      audioClass2.current.loop = true;
+      // Allow user gesture to enable autoplay
+      audioCow.current.load();
+      audioElephant.current.load();
+
+      audioCow.current.loop = true;
+      audioElephant.current.loop = true;
 
       const model = await tmImage.load(modelURL, metadataURL);
       modelRef.current = model;
@@ -53,33 +83,59 @@ const TMImageModel = () => {
 
       const loop = async () => {
         webcam.update();
-        const predictions = await model.predict(webcam.canvas);
+        const newPredictions = await model.predict(webcam.canvas);
+        const timestamp = new Date().toISOString();
 
-        const topPrediction = predictions.reduce((max, p) =>
+        // Only keep predictions where class has > 50% confidence
+        const confidentPredictions = newPredictions
+          .filter((p) => p.probability > 0.5)
+          .map((p) => ({
+            className: p.className,
+            probability: p.probability,
+            timestamp,
+          }));
+
+        if (confidentPredictions.length > 0) {
+          setPredictions((prev) => {
+            const now = Date.now();
+            const oneMinuteAgo = now - 60000;
+            const recentPredictions = [...prev, ...confidentPredictions].filter(
+              (p) => new Date(p.timestamp).getTime() >= oneMinuteAgo
+            );
+            return recentPredictions;
+          });
+        }
+
+        const topPrediction = newPredictions.reduce((max, p) =>
           p.probability > max.probability ? p : max
         );
 
-        if (topPrediction.className !== majorityClass) {
-          setMajorityClass(topPrediction.className);
+        const label = topPrediction.className;
 
-          // Stop currently playing audio if different
-          if (topPrediction.className === "Class 1") {
-            if (currentlyPlaying.current !== "Class 1") {
-              stopAudio(audioClass2.current);
-              playAudio(audioClass1.current);
-              currentlyPlaying.current = "Class 1";
-            }
-          } else if (topPrediction.className === "Class 2") {
-            if (currentlyPlaying.current !== "Class 2") {
-              stopAudio(audioClass1.current);
-              playAudio(audioClass2.current);
-              currentlyPlaying.current = "Class 2";
-            }
-          } else {
-            // Unknown class: stop all audio
-            stopAudio(audioClass1.current);
-            stopAudio(audioClass2.current);
-            currentlyPlaying.current = null;
+        if (label !== majorityClass) {
+          setMajorityClass(label);
+
+          switch (label) {
+            case "cow":
+              if (currentlyPlaying.current !== "cow") {
+                stopAudio(audioElephant.current);
+                playAudio(audioCow.current);
+                currentlyPlaying.current = "cow";
+              }
+              break;
+
+            case "Class 4":
+              if (currentlyPlaying.current !== "eleplant") {
+                stopAudio(audioCow.current);
+                playAudio(audioElephant.current);
+                currentlyPlaying.current = "eleplant";
+              }
+              break;
+
+            default:
+              stopAudio(audioCow.current);
+              stopAudio(audioElephant.current);
+              currentlyPlaying.current = null;
           }
         }
 
@@ -98,6 +154,21 @@ const TMImageModel = () => {
     init();
   };
 
+  const renderStatusText = () => {
+    switch (majorityClass) {
+      case "cow":
+        return "Detected: Cow";
+      case "eleplant":
+        return "Detected: Elephant";
+      case "other":
+        return "Detected: Other Object";
+      case "Class 4":
+        return "Detected: Class 4";
+      default:
+        return "Detecting...";
+    }
+  };
+
   return (
     <div className="tm-container">
       <h2 className="tm-title">Teachable Machine Image Model</h2>
@@ -113,19 +184,8 @@ const TMImageModel = () => {
       <div ref={webcamRef} className="tm-webcam" />
 
       {majorityClass && !loading && (
-        <h3
-          className={`tm-status ${
-            majorityClass === "Class 1" ? "blue" : "red"
-          }`}
-        >
-          User is{" "}
-          <span>
-            {majorityClass === "Class 1"
-              ? "not holding a mobile"
-              : majorityClass === "Class 2"
-              ? "holding a mobile"
-              : "unknown"}
-          </span>
+        <h3 className="tm-status">
+          <span>{renderStatusText()}</span>
         </h3>
       )}
     </div>
